@@ -334,10 +334,7 @@ this.path = function() {
 	path = path.replace(/ -/g, "-")
 	path = path.replace(/-0\./g, "-.")
 	path = path.replace(/ 0\./g, " .")
-	path = path.replace(/ (\d+\.\d+)/g, "#$1")
-	path = path.replace(/ (\d+) /g, "#$1#")
-	path = path.replace(/ \./g, ".")	
-	path = path.replace(/#/g, " ")
+	path = path.replace(/(\.\d+) \./g, "$1.")
 	return path
 }
 
