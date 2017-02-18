@@ -26,6 +26,8 @@ var Segment = function() {
 }
 
 this.parse = function(path) {
+	path = path.trim()
+	path = path.replace(/\s/g, " ")
 	path = path.replace(/,/g, " ")
 	path = path.replace(/([A-Za-z])([A-Za-z])/g, "$1 $2")
 	path = path.replace(/([A-Za-z])(\d)/g, "$1 $2")
@@ -36,6 +38,9 @@ this.parse = function(path) {
 	var reg = /((?:-?[\d]*)\.\d+)((?:\.\d+)+)/g
 	while (reg.test(path)) {
 		path = path.replace(reg, "$1 $2")
+	}
+	while (/  /.test(path)) {
+		path = path.replace(/  /g, " ")
 	}
 	var list = path.split(" ")
 	var prev = ""
