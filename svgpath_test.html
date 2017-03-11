@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>SVGPath.js Test Page</title>
+<style>
+svg {
+	border: 2px solid black;
+	width: 512px;
+	height: 512px;
+}
+</style>
+<script type="text/javascript" src="svgpath.js"></script>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512"><path id="box1" d=""></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512"><path id="box2" d=""></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512"><path id="box3" d=""></svg>
+<script type="text/javascript">
+path = `M20 20C40 0 80 0 100 20S40 40 100 100Q20 20 20 100T4 80A40 40 0 0 0 20 20Z
+		M35 20 35 40 L 55 40 L 55 20 Z M 60 20 V 40 H 80 Z`
+path = "M104.081 62.361C180.879-14.44 334.481-14.44 411.279 62.361S180.879 139.159 411.279 369.559Q104.081 62.361 104.081 369.559T42.639 292.761A153.599 153.599 0 0 0 104.081 62.361ZM161.681 62.361 161.681 139.159 238.479 139.159 238.479 62.361ZM257.68 62.361V139.159H334.481Z"
+
+box1 = document.getElementById("box1")
+box2 = document.getElementById("box2")
+box3 = document.getElementById("box3")
+
+svg = new SVGPath()
+svg.import(path)
+box1.setAttribute("d", svg.export())	// draw original
+
+// run only one test
+//test1()
+//test2()
+//test3()
+//test4()
+//test5()
+//test6()
+//test7()
+//test8()
+//test9()
+//test10()
+//test11()
+test12()
+
+function test1() {
+	svg.absolute()
+	svg.relative()
+	svg.absolute()
+	svg.relative()
+	svg.absolute()
+	svg.relative()
+	box2.setAttribute("d", svg.export())	// draw absolute relative
+	console.log(svg.exportlist())
+	console.log(svg.exportlist(8))
+	svg.importlist(svg.exportlist(8))
+	box3.setAttribute("d", svg.export())	// draw import of export list
+}
+
+function test2() {
+	svg.round(3)
+	console.log(svg.exportlist())
+	box2.setAttribute("d", svg.export())	// draw round 3
+	svg.round(0)
+	console.log(svg.exportlist())
+	box3.setAttribute("d", svg.export())	// draw round 0
+}
+
+function test3() {
+	svg.absolute()
+	svg.relative()
+	svg.absolute()
+	svg.relative()
+	svg.absolute()
+	svg.relative()
+	svg.round(3)
+	console.log(svg.exportlist())
+	box2.setAttribute("d", svg.export())	// draw round 3
+	svg.round(0)
+	console.log(svg.exportlist())
+	box3.setAttribute("d", svg.export())	// draw round 0
+}
+
+function test4() {
+	svg.move(30,30)
+	console.log(svg.exportlist())
+	box2.setAttribute("d", svg.export())	// draw move
+	svg.move(-30,-30)
+	console.log(svg.exportlist())
+	box3.setAttribute("d", svg.export())	// draw move back
+}
+
+function test5() {
+	svg.absolute()
+	svg.relative()
+	svg.absolute()
+	svg.relative()
+	svg.absolute()
+	svg.relative()
+	svg.move(30,30)
+	svg.round(0)
+	console.log(svg.exportlist())
+	box2.setAttribute("d", svg.export())	// draw move
+	svg.round(3)
+	svg.move(-30,-30)
+	console.log(svg.exportlist())
+	box3.setAttribute("d", svg.export())	// draw move back
+}
+
+function test6() {
+	svg.scale(0.57)
+	console.log(svg.exportlist())
+	box2.setAttribute("d", svg.export())
+	svg.scale(1.23)
+	console.log(svg.exportlist())
+	box3.setAttribute("d", svg.export())
+}
+
+function test7() {
+	svg.absolute()
+	svg.relative()
+	svg.absolute()
+	svg.relative()
+	svg.absolute()
+	svg.relative()
+	svg.scale(0.57)
+	svg.move(30,30)
+	svg.round(0)
+	console.log(svg.exportlist())
+	box2.setAttribute("d", svg.export())
+	svg.round(3)
+	svg.scale(1.23)
+	console.log(svg.exportlist())
+	box3.setAttribute("d", svg.export())
+}
+
+function test8() {
+	svg.flip(0, 256)
+	console.log(svg.exportlist())
+	box2.setAttribute("d", svg.export())
+	svg.flip(256, 0)
+	console.log(svg.exportlist())
+	box3.setAttribute("d", svg.export())
+}
+
+function test9() {
+	svg.relative()
+	svg.round(0)
+	svg.flip(256, 0)
+	console.log(svg.exportlist())
+	box2.setAttribute("d", svg.export())
+	svg.flip(0, 256)
+	console.log(svg.exportlist())
+	box3.setAttribute("d", svg.export())
+}
+
+function test10() {
+	svg.scale(0.64)
+	console.log(svg.exportlist())
+	box2.setAttribute("d", svg.export())
+	svg.center(256, 256)
+	console.log(svg.exportlist())
+	box3.setAttribute("d", svg.export())
+}
+
+function test11() {
+	svg.scale(.35)
+	svg.move(15,45)
+	console.log(svg.exportlist())
+	svg.round(3)
+	svg.rotate(256,256,-45)
+	console.log(svg.exportlist())
+	box2.setAttribute("d", svg.export())
+	svg.center(256, 256)
+	console.log(svg.exportlist())
+	box3.setAttribute("d", svg.export())
+}
+
+function test12(){
+	window.setInterval(test12rotate, 20)
+	svg.scale(.35)
+	svg.move(45,45)
+}
+
+function test12rotate() {
+	svg.rotate(256,256,1)
+	box2.setAttribute("d", svg.export())
+}
+
+
+</script>
+</body>
+</html>
