@@ -4,8 +4,8 @@
 var SVGPath = {
 	"import" : function () {},
 	"export" : function () {},
-	"importlist" : function () {},
 	"exportlist" : function () {},
+	"analyse" : function () {},
 	"absolute" : function () {},
 	"relative" : function () {},
 	"round" : function () {},

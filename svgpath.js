@@ -30,6 +30,7 @@ var Segment = function() {		// All value are absolute
 	this.ar = undefined
 	this.af = undefined
 	this.sf = undefined
+	this.info = ""				// Analyse result
 }
 
 // format the segment for export
@@ -39,6 +40,8 @@ function formatsegment(s) {
 	seg.t = s.t
 	seg.x = s.t.charCodeAt(0)<96 ? rounddec(s.x) : rounddec(s.x - s.px)
 	seg.y = s.t.charCodeAt(0)<96 ? rounddec(s.y) : rounddec(s.y - s.py)
+	seg.px = rounddec(s.px)
+	seg.py = rounddec(s.py)
 	seg.x1 = s.x1==undefined ? undefined : s.t.charCodeAt(0)<96 ? rounddec(s.x1) : rounddec(s.x1 - s.px)
 	seg.y1 = s.y1==undefined ? undefined : s.t.charCodeAt(0)<96 ? rounddec(s.y1) : rounddec(s.y1 - s.py)
 	seg.x2 = s.x2==undefined ? undefined : s.t.charCodeAt(0)<96 ? rounddec(s.x2) : rounddec(s.x2 - s.px)
@@ -48,6 +51,7 @@ function formatsegment(s) {
 	seg.ar = s.ar==undefined ? undefined : rounddec(s.ar)
 	seg.af = s.af
 	seg.sf = s.sf
+	seg.info = s.info
 	return seg
 }
 
@@ -159,7 +163,7 @@ this.import = function(str) {
 }
 
 // export path for final usage in <svg>
-this.export = function(dec) {
+this.export = function() {
 	var str = ""
 	var pre = ""
 	
@@ -223,34 +227,22 @@ this.export = function(dec) {
 	str = str.replace(/ -/g, "-")
 	str = str.replace(/-0\./g, "-.")
 	str = str.replace(/ 0\./g, " .")
+	str = str.replace(/([A-Za-z])0\./g, "$1.")
 	str = str.replace(/(\.\d+) \./g, "$1.")
 	return str
 }
 
-// import from segment list, one segment on each line
-// comments are after #
-this.importlist = function(list, nocommentedline) {
-	nocommentedline = nocommentedline==undefined ? false : nocommentedline	
-	var str = ""
-	var lines = list.split("\n")
-	for (var i=0; i<lines.length; i++) {
-		var ind = lines[i].indexOf("#")					// check comments
-		if (ind<0) {
-			str += lines[i] + " "						// no comments
-		} else {
-			if (nocommentedline)
-				continue								// dont import commented line
-			str += lines[i].substring(0, ind) + " "		// remove comments
-		}
+// export the segments as array
+this.exportlist = function() {
+	var list = []
+	for (var i=0; i<segs.length; i++) {
+		list[i] = formatsegment(segs[i])
 	}
-	this.import(str)
+	return list
 }
 
-// export to segment list, one segment on each line
-// cannot be used in <svg>, may contain analysis comments
-this.exportlist = function(dist) {
-
-	var str = ""
+// make some analysis to minify
+this.analyse = function(dist) {
 	dist = Number(dist)
 	if (isNaN(dist))
 		dist = 0
@@ -258,34 +250,75 @@ this.exportlist = function(dist) {
 		dist = 0
 
 	for (var i=0; i<segs.length; i++) {
-		var seg = formatsegment(segs[i])
-		str += seg.t
-		str += seg.x1==undefined ? "" : " " + seg.x1
-		str += seg.y1==undefined ? "" : " " + seg.y1
-		str += seg.x2==undefined ? "" : " " + seg.x2
-		str += seg.y2==undefined ? "" : " " + seg.y2
-		str += seg.r1==undefined ? "" : " " + seg.r1
-		str += seg.r2==undefined ? "" : " " + seg.r2
-		str += seg.ar==undefined ? "" : " " + seg.ar
-		str += seg.af==undefined ? "" : seg.af ? " 1" : " 0"
-		str += seg.sf==undefined ? "" : seg.sf ? " 1" : " 0"
-		str += (seg.t.toUpperCase()=="V" || seg.t.toUpperCase()=="Z") ? "" : " " + seg.x
-		str += (seg.t.toUpperCase()=="H" || seg.t.toUpperCase()=="Z") ? "" : " " + seg.y
+		segs[i].info = ""
+	}
 
-		if (dist == 0) {
-			str += "\n"
-		} else {
-			var x = segs[i].x - segs[i].px
-			var y = segs[i].y - segs[i].py
-			var d = Math.sqrt(x*x + y*y)
-			if (d <= dist) {
-				str += " # D " + d + "\n"
-			} else {
-				str += "\n"
-			}
+	// convert L to H or V
+	for (var i=0; i<segs.length; i++) {
+		if ((segs[i].x==segs[i].px) && (segs[i].t.toUpperCase()=="L")) {
+			segs[i].t = segs[i].t == "L" ? "V" : "v"
+		} else
+		if ((segs[i].y==segs[i].py) && (segs[i].t.toUpperCase()=="L")) {
+			segs[i].t = segs[i].t == "L" ? "H" : "h"
 		}
 	}
-	return str
+
+	var a = -1
+	for (var i=0; i<segs.length-1; i++) {
+		var dx = segs[i].x - segs[i].px
+		var dy = segs[i].y - segs[i].py
+		// two consecutive M
+		if ((segs[i].t.toUpperCase()=="M") && (segs[i+1].t.toUpperCase()=="M")) {
+			segs[i].info = "X"
+			segs[i+1].px = i==0 ? 0 : segs[i-1].x
+			segs[i+1].py = i==0 ? 0 : segs[i-1].y
+		}
+		// on the same line
+		if (segs[i].t.toUpperCase()=="L" || segs[i].t.toUpperCase()=="H" || segs[i].t.toUpperCase()=="V") {
+			var b = atan3(dx, dy)
+			if (b == a) {
+				segs[i-1].info = "X"
+			}
+			a = b
+		} else {
+			a = -1
+		}
+	}
+
+	// last segment cant be M
+	if (segs[segs.length-1].t.toUpperCase()=="M") {
+		segs[segs.length-1].info = "X"
+	}
+
+	// remove certainly removables
+	var i = segs.length
+	while (i--) {
+		if (segs[i].info == "X")
+			segs.splice(i, 1)
+	}
+
+	if (dist==0)
+		return
+
+	// too close segments
+	for (var i=0; i<segs.length-1; i++) {
+		if (segs[i].t.toUpperCase()=="Z")
+			continue
+		var dx = segs[i].x - segs[i+1].x
+		var dy = segs[i].y - segs[i+1].y
+		var d = Math.sqrt(dx*dx + dy*dy)
+		if (d <= dist) {
+			segs[i].info = "D " + d
+		}
+	}
+}
+
+function atan3(x, y) {
+	var result = Math.atan2(y, x)
+	if (result < 0) {
+		result += 2 * Math.PI
+	}
+	return result
 }
 
 // make all segments absolute
@@ -341,23 +374,25 @@ this.move = function(dx, dy) {
 	segs[0].py = 0
 }
 
-// flip horizontally with flip(0, center)
-// flip vertically, with flip(center, 0)
+// flip horizontally with flip(undefined, center)
+// flip vertically, with flip(center, undefined)
+// flip wrt a point (px, py)
 this.flip = function(x, y) {
 	for (var i=0; i<segs.length; i++) {
-		if (x==0) {
-			segs[i].y = y + (y - segs[i].y)
-			segs[i].py = y + (y - segs[i].py)
-			segs[i].y1 = segs[i].y1==undefined ? undefined : y + (y - segs[i].y1)
-			segs[i].y2 = segs[i].y2==undefined ? undefined : y + (y - segs[i].y2)
-		}
-		if (y==0) {
+		if (x!=undefined) {
 			segs[i].x = x + (x - segs[i].x)
 			segs[i].px = x + (x - segs[i].px)
 			segs[i].x1 = segs[i].x1==undefined ? undefined : x + (x - segs[i].x1)
 			segs[i].x2 = segs[i].x2==undefined ? undefined : x + (x - segs[i].x2)
+			segs[i].sf = segs[i].sf==undefined ? undefined : (segs[i].sf+1)%2
 		}
-		segs[i].sf = segs[i].sf==undefined ? undefined : (segs[i].sf+1)%2
+		if (y!=undefined) {
+			segs[i].y = y + (y - segs[i].y)
+			segs[i].py = y + (y - segs[i].py)
+			segs[i].y1 = segs[i].y1==undefined ? undefined : y + (y - segs[i].y1)
+			segs[i].y2 = segs[i].y2==undefined ? undefined : y + (y - segs[i].y2)
+			segs[i].sf = segs[i].sf==undefined ? undefined : (segs[i].sf+1)%2
+		}
 	}
 	segs[0].px = 0
 	segs[0].py = 0
