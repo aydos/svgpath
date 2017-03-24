@@ -52,6 +52,12 @@ function formatsegment(s) {
 	seg.af = s.af
 	seg.sf = s.sf
 	seg.info = s.info
+	if (s.t == "M") {
+		seg.info += "m " + rounddec(s.x - s.px) + " " + rounddec(s.y - s.py)
+	}
+	if (s.t == "m") {
+		seg.info += "M " + rounddec(s.x) + " " + rounddec(s.y)
+	}
 	return seg
 }
 
@@ -166,7 +172,6 @@ this.import = function(str) {
 this.export = function() {
 	var str = ""
 	var pre = ""
-	
 	for (var i=0; i<segs.length; i++) {
 		var seg = formatsegment(segs[i])
 		switch (seg.t) {
@@ -273,6 +278,10 @@ this.analyse = function(dist) {
 			segs[i+1].px = i==0 ? 0 : segs[i-1].x
 			segs[i+1].py = i==0 ? 0 : segs[i-1].y
 		}
+		// two consecutive Z
+		if ((segs[i].t.toUpperCase()=="Z") && (segs[i+1].t.toUpperCase()=="Z")) {
+			segs[i].info = "X"
+		}
 		// on the same line
 		if (segs[i].t.toUpperCase()=="L" || segs[i].t.toUpperCase()=="H" || segs[i].t.toUpperCase()=="V") {
 			var b = atan3(dx, dy)
@@ -283,6 +292,11 @@ this.analyse = function(dist) {
 		} else {
 			a = -1
 		}
+	}
+
+	// first segment must be M
+	if (segs[0].t.toUpperCase()!="M") {
+		segs[0].t = segs[0].t.charCodeAt(0)<96 ? "M" : "m"
 	}
 
 	// last segment cant be M
@@ -308,7 +322,7 @@ this.analyse = function(dist) {
 		var dy = segs[i].y - segs[i+1].y
 		var d = Math.sqrt(dx*dx + dy*dy)
 		if (d <= dist) {
-			segs[i].info = "D " + d
+			segs[i].info = "D " + d + " "
 		}
 	}
 }
